@@ -1,1 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" xcontent="IE=edge">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <title>Obfuscate</title>
+    <style>
+        * {margin:0;padding:0;border:0;height:0;}
+        body, html {background:black;overflow:hidden;}
+        canvas, html {background:whitesmoke;}
+    </style>
+</head>
+<canvas id="canvas"></canvas>
+<body id="body" onload="start()">
+    <script>
+    const ctx=document.getElementById("canvas").getContext("2d");
+    
+    let S=window.innerHeight/19;//scale
+    let s=window.innerHeight/20;
+    let margin=(window.innerWidth-window.innerHeight)/2;
+    ctx.canvas.width=window.innerHeight;
+    ctx.canvas.height=window.innerHeight;
+    if(window.innerHeight>window.innerWidth) a=window.innerWidth;
+    else a=window.innerHeight;
+    let n=13;
+    let gX=S*3;
+    let gY=S*3;
+    let X=0;
+    let grid=[];grid.length=n*n;grid.fill("");
+    let fontS="11px serif";
+    let fontM="24px serif";
+    let fontL="30px serif";
+    let fontXL="60px serif";
 
+    function loadFile(filePath) {
+            var result = null;
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", filePath, false);
+            xmlhttp.send();
+            if (xmlhttp.status==200) {
+                result = xmlhttp.responseText;
+            }
+            return result;
+        }
+
+    let index=0;
+    let answer=loadFile("obfuscate/crosswords2.txt").split("\n")[index];
+    let L=["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", 
+            "A", "S", "D", "F", "G", "H", "J", "K", "L"
+            , "Z", "X", "C", "V", "B", "N", "M"];
+    let Y=["!", "£", "$", "%", "^", "&", "*", "=", "-", "+", 
+            "<", "?", "☺", "☻", "♥", "♦", "♣", "♠", "•"
+            , "◘", "♂", "♀", "♪", "♫", "☼", "►"];
+    let R=[];
+    let Lh=[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+    let Lm=-1; let md=false;
+
+    function start(){
+        score=[0, 0];
+        R=[];
+        X=0;
+        index=Math.floor(10000*Math.random());
+        console.log(index)
+        temp=[];
+        for(i=0;i<26;i++){
+            j=Math.floor(Y.length*Math.random());
+            temp.push(Y[j]);
+            Y=Y.slice(0, j).concat(Y.slice(j+1));
+        }
+        Y=temp;
+        answer=loadFile("crosswords/crosswords2.txt").split("\n")[index];
+    }
+
+    let c0="black"; let c1="lightgrey";
+
+    let team=0;
+    let score=[0, 0];
+    let mascot=["♠", "♥"];
+
+    let animstart=0;
+
+    let mode="rules";
+
+    function resizecanvas(){
+        if (window.innerWidth>window.innerHeight){
+            a=window.innerHeight;
+            margin=(window.innerWidth-a)/2;
+            ctx.canvas.height=a;
+            document.getElementById("canvas").style.height=String(a)+'px';
+            document.getElementById("body").style.height=String(a)+'px';
+            S=a/19;
+            s=a/20;
+            gX=S*3;
+            gY=S*3;
+        }
+        else{
+            a=window.innerWidth;
+            margin=0;
+            ctx.canvas.height=a*2;
+            document.getElementById("body").style.height=String(a*2)+'px';
+            document.getElementById("canvas").style.height=String(a*2)+'px';
+            S=a/13;
+            s=a/14;
+            gX=0;
+            gY=S*2;
+        }
+        ctx.canvas.width=a;
+        document.getElementById("canvas").style.width=String(a)+'px';
+        document.getElementById("canvas").style.marginLeft=String(margin)+'px';
+        fontS=String(Math.floor(a/60))+'px serif';fontM=String(Math.floor(a/30))+'px serif';fontL=String(Math.floor(a/24))+'px serif';fontXL=String(Math.floor(a/12))+'px serif';
+    }
+
+    function rules(){
+        if(mode=="win"){
+            anim=(Date.now()-animstart)/500;
+            if(anim>1)anim=1;
+            ctx.globalAlpha=anim;
+        }
+        else anim=1;
+        ctx.fillStyle="white"; ctx.strokeStyle="black"; ctx.fillRect(0, S*10-2.6*S*anim, a, anim*S*5.2); ctx.strokeRect(-S, S*10-2.6*S*anim, a+2*S, anim*S*5.2);
+        ctx.fillStyle="black"; ctx.font=fontL; ctx.textAlign="center"; ctx.textBaseline="middle";
+        if(mode=="rules"){
+            ctx.fillText("take turns choosing a symbol on the grid,", a/2, S*8);
+            ctx.fillText("then guessing what letter it is", a/2, S*9);
+            ctx.fillText("score a point for each correct guess", a/2, S*10);
+            ctx.fillText("to win, have the highest total score once the grid is filled", a/2, S*11);
+            ctx.fillText("[press any key or tap anywhere to continue]", a/2, S*12);
+        }
+        if(mode=="rules1"){
+            ctx.fillText("left hand side player", a/2, S*8.5);
+            ctx.fillText("pick a letter to reveal for free", a/2, S*9.5);
+            ctx.fillText("use either your keyboard", a/2, S*10.5);
+            ctx.fillText("or the letters above", a/2, S*11.5);
+        }
+        if(mode=="rules2"){
+            ctx.fillText("right hand side player", a/2, S*8.5);
+            ctx.fillText("pick a letter to reveal for free", a/2, S*9.5);
+            ctx.fillText("use either your keyboard", a/2, S*10.5);
+            ctx.fillText("or the letters above", a/2, S*11.5);
+        }
+        if(mode=="win"){
+            if(score[0]<score[1])ctx.fillText("right hand side player wins!", a/2, S*9.5);
+            if(score[0]>score[1])ctx.fillText("left hand side player wins!", a/2, S*9.5);
+            if(score[0]==score[1])ctx.fillText("it's a dead heat!", a/2, S*9.5);
+            if(score[0]==score[1])ctx.fillText("[press or tap for a rematch]", a/2, S*10.5);
+            else ctx.fillText("[press or tap to restart]", a/2, S*10.5);
+        }
+    }
+
+    function draw(){
+        resizecanvas();
+        ctx.beginPath(); ctx.fillStyle="whitesmoke"; ctx.rect(0, 0, window.innerHeight, window.innerHeight);ctx.fill();
+        for(i=0;i<n*n;i++){
+            if(grid[i]==null)grid[i]="";
+            if(answer[i]=="_")grid[i]=null;
+            else grid[i]=answer[i];
+        }
+        ctx.beginPath();ctx.fillStyle="black";ctx.rect(gX-S+s, gY-S+s, S*n+S-s, S*n+S-s);ctx.fill();
+        ctx.beginPath(); ctx.fillStyle="white";
+        for (i=0;i<n*n;i++){if (grid[i]!=null) ctx.rect(gX+S*(i%n), gY+S*Math.floor(i/n), s, s);} ctx.fill();
+        ctx.beginPath(); ctx.fillStyle="lightgrey"; if(grid[X]!=null)ctx.rect(gX+S*(X%n), gY+S*Math.floor(X/n), s, s); ctx.fill();
+        ctx.beginPath();ctx.font=fontL;
+        ctx.textBaseline="middle";ctx.textAlign="center";
+        win=true;
+        for (i=0;i<n*n;i++){
+            if (grid[i]!=null){
+                if(R.indexOf(grid[i])!=-1){
+                    ctx.fillStyle=c0;
+                    ctx.fillText(grid[i], gX+S*(i%n+.45), gY+S*(Math.floor(i/n)+.55));
+                }
+                else{
+                    ctx.fillStyle=c1;
+                    if(i==X) ctx.fillStyle="grey";
+                    ctx.fillText(Y[L.indexOf(grid[i])], gX+S*(i%n+.45), gY+S*(Math.floor(i/n)+.55));
+                    win=false;
+                }
+            }
+        }
+        if(win && X!=1001){mode="win";animstart=Date.now();X=1001;}
+        keyboard();
+        if(team==0) ctx.fillStyle=c1;
+        if(team==1) ctx.fillStyle=c0;
+        if(window.innerWidth>window.innerHeight) ctx.fillText(score[1], a/2+3*S, a-gY/2);
+        else ctx.fillText(score[1], a/2+3*S, gY/2);
+        if(team==1) ctx.fillStyle=c1;
+        if(team==0) ctx.fillStyle=c0;
+        if(window.innerWidth>window.innerHeight) ctx.fillText(score[0], a/2-3*S, a-gY/2);
+        else ctx.fillText(score[0], a/2-3*S, gY/2);
+    }
+    
+    function keyboard(){
+        ctx.font=fontL;ctx.textBaseline="middle";ctx.textAlign="center";
+        if(window.innerWidth>window.innerHeight){
+            k=9; j=1;
+            for(i=0;i<26;i++){
+                if(i==19){k=22;j=2;}
+                if(R.indexOf(L[i])==-1){
+                    ctx.fillStyle=c0;
+                    if(Lh[i]||(i==Lm && md)) ctx.fillStyle="grey";
+                    ctx.fillText(L[i], a/2-S*k+S*i, j*gY/3);
+                }
+                else{
+                    ctx.fillStyle=c1;
+                    ctx.fillText(Y[i], a/2-S*k+S*i, j*gY/3);
+                }
+            }
+        }
+        else{
+            ctx.font=fontXL;
+            k=4.5;j=0;
+            for(i=0;i<26;i++){
+                if(i==10){k=14;j=1;}
+                if(i==19){k=22;j=2;}
+                if(R.indexOf(L[i])==-1){
+                    ctx.fillStyle=c0;
+                    if(Lh[i]||(i==Lm && md)) ctx.fillStyle="grey";
+                    ctx.fillText(L[i], a/2+1.3*S*(i-k), gY+a+S+S*2*j);
+                }
+                else{
+                    ctx.fillStyle=c1;
+                    ctx.fillText(Y[i], a/2+1.3*S*(i-k), gY+a+S+S*2*j);
+                }
+            }
+        }
+    }
+
+    function wrong(){
+        anim=(Date.now()-animstart)/500;
+        if(anim>0 && anim<1 && mode!="win"){
+            ctx.fillStyle="black"; ctx.textBaseline="middle"; ctx.textAlign="center";
+            ctx.font=String(S+anim*S*10)+"px serif";
+            ctx.globalAlpha=Math.sin(anim*Math.PI);
+            ctx.fillText("WRONG", a/2, a/2);
+        }
+    }
+
+    document.addEventListener("keydown", (event) => {
+        pressletter(event.key.toUpperCase());
+        if(mode=="rules") mode="rules1";
+        if(mode=="win"){start(); mode="rules1";}
+    });
+    
+    document.addEventListener("keyup", (event) => {
+        if(L.indexOf(event.key.toUpperCase())!=-1) Lh[L.indexOf(event.key.toUpperCase())]=false;
+    });
+    
+    setInterval(function () {
+        draw();
+        if(mode=="rules"||mode=="rules1"||mode=="rules2"||mode=="win")rules();
+        wrong();
+    }, 20);
+
+    function pressletter(l){
+        if(mode=="rules2" && L.indexOf(l)!=-1 && Y[L.indexOf(l)]!=mascot[0]){
+            mode="play";
+            mascot[1]=Y[L.indexOf(l)];
+            R.push(L[L.indexOf(l)]);
+        }
+        if(mode=="rules1" && L.indexOf(l)!=-1){
+            mode="rules2";
+            mascot[0]=Y[L.indexOf(l)];
+            R.push(L[L.indexOf(l)]);
+        }
+        if(L.indexOf(l)!=-1 && R.indexOf(l)==-1 && R.indexOf(grid[X])==-1 && grid[X]!=null){
+            if(grid[X]==l){
+                R.push(l);
+                score[team]+=1;
+            }
+            else animstart=Date.now();
+            team=1-team;
+        }
+    }
+    function getletter(mx, my){
+        Lm=-1;
+        if(window.innerWidth>window.innerHeight){
+            for(i=0;i<19;i++){
+                if(mx>window.innerWidth/2-S*10.5+S*i && mx>window.innerWidth/2-S*9.5+S*i && my>gY/3-S/2 && my<gY/3+S/2) Lm=i;
+            }
+            for(i=19;i<26;i++){
+                if(mx>window.innerWidth/2-S*4.5+S*(i-19) && mx>window.innerWidth/2-S*3.5+S*(i-19) && my>2*gY/3-S/2 && my<2*gY/3+S/2) Lm=i;
+            }
+        }
+        else{
+            k=4.5;j=0;
+            for(i=0;i<26;i++){
+                if(i==10){k=14;j=1;}
+                if(i==19){k=22;j=2;}
+                if(mx>a/2+1.3*S*(i-k-.5) && mx<a/2+1.3*S*(i-k+.5) && my>gY+a+S+S*2*(j-.5) && my<gY+a+S+S*2*(j+.5)) Lm=i;
+            }
+        }
+    }
+
+    document.addEventListener("mousedown", (event) => {
+        if (event.clientX-gX-margin>0 && event.clientX-gX-margin<S*n && event.clientY-gY>0 && event.clientY-gY<S*n){
+                tile=Math.floor((event.clientX-gX-margin)/S)+n*Math.floor((event.clientY-gY)/S);
+                if(mode=="play")X=tile;
+        }
+        if(mode=="rules") mode="rules1";
+        if(mode=="win"){start(); mode="rules1";}
+        md=true;
+    });
+    document.addEventListener("mouseup", (event) => {
+        getletter(event.clientX, event.clientY);
+        if(Lm!=-1){
+            pressletter(L[Lm]);
+        }
+        md=false;
+    });
+    document.addEventListener("mousemove", (event) => {
+        if (event.buttons%2==1 && event.clientX-gX-margin>0 && event.clientX-gX-margin<S*n) {
+            tile=Math.floor((event.clientX-gX-margin)/S)+n*Math.floor((event.clientY-gY)/S);
+            if(grid[tile]!=null && mode=="play")X=tile;
+        }
+        getletter(event.clientX, event.clientY);
+    });
+    document.addEventListener("touchmove", (event) => {
+        if (event.touches[0].clientX-gX-margin>0 && event.touches[0].clientX-gX-margin<S*n && event.touches[0].clientY-gY>0 && event.touches[0].clientY-gY<S*n) {
+            tile=Math.floor((event.touches[0].clientX-gX-margin)/S)+n*Math.floor((event.touches[0].clientY-gY)/S);
+            if(grid[tile]!=null && mode=="play")X=tile;
+        }
+        getletter(event.touches[0].clientX, event.touches[0].clientY);
+    });
+    document.addEventListener("touchstart", (event) => {
+        if (event.touches[0].clientX-gX-margin>0 && event.touches[0].clientX-gX-margin<S*n && event.touches[0].clientY-gY>0 && event.touches[0].clientY-gY<S*n) {
+            tile=Math.floor((event.touches[0].clientX-gX-margin)/S)+n*Math.floor((event.touches[0].clientY-gY)/S);
+            if(mode=="play")X=tile;
+        }
+        getletter(event.touches[0].clientX, event.touches[0].clientY);
+        if(mode=="rules") mode="rules1";
+        if(mode=="win"){start(); mode="rules1";}
+        md=true;
+    });
+    document.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        if(Lm!=-1){
+            pressletter(L[Lm]);
+        }
+        md=false;
+        Lm=-1;
+    });
+    document.addEventListener("resize", (event) => {resizecanvas()});
+    </script>
+</body>
+</html>
