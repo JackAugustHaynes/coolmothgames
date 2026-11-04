@@ -1,44 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
-<meta charset="UTF-8">
-<title>cool moth games</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="">
-<style>
-    .div{
-        border: 5px outset red;
-        background-color: lightblue;
-        text-align: center;
-    }
-    caption {
-        caption-side: bottom;
-        padding: 10px;
-    }
-</style>
-<script src=""></script>
-<body>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place</title>
+    <style>
+        body, html {margin:0px; width:100%; height:100%;overflow:hidden;}
+        canvas, html {margin:0px;}
+    </style>
+</head>
+<canvas id="canvas"></canvas>
+<body onload="draw()" style="background-color:burlywood">
+    <script>
+        const ctx=document.getElementById("canvas").getContext("2d");
+        xoff=200; yoff=200;
+        syoff=200;
+        B=100;
+        C=100;
+        D=100;
+        num=7;
+        if(num==7){
+            L=["A", "B", "C", "D", "E", "F", "G"];
+            Lx=[1, 0, 2, 1, 0, 2, 1];
+            Ly=[0, .5, .5, 1, 1.5, 1.5, 2];
+            Lanim=[0, 0, 0, 0, 0, 0, 0];
+        }
+        if(num==9){
+            L=["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+            Lx=[0, 1, 2, 1, 0, 2, 0, 1, 2];
+            Ly=[0, 0, 0, 1, 1, 1, 2, 2, 2];
+        }
+        input="";
+        used=[];
+        chosen=3;
+        newletter="A";
+        ongoingTouches=[];
+        touched=false;
+        stage=0;
+        animtime=0;
+        anim1=20; anim2=15; anim3=8;
+        player=0;
+        turnanim=0;
+        score=[0, 0];
+        
+        const clutter1=new Image(); clutter1.src="images/clutter1.svg";
+        const clutter2=new Image(); clutter2.src="images/clutter2.svg";
+        let clutter=[clutter1, clutter2];
 
+        const rock0=new Image(); rock0.src="images/rock0.svg";
+        const rock1=new Image(); rock1.src="images/rock1.svg";
+        const rock2=new Image(); rock2.src="images/rock2.svg";
+        const rock3=new Image(); rock3.src="images/rock3.svg";
+        let rock=[rock0, rock1, rock2, rock3];
 
+        const frame0=new Image(); frame0.src="images/frame0.svg";
+        const frame1=new Image(); frame1.src="images/frame1.svg";
+        const frame2=new Image(); frame2.src="images/frame2.svg";
+        const frame3=new Image(); frame3.src="images/frame3.svg";
+        let frame=[frame0, frame1, frame2, frame3];
 
-<div class="div">
- <h1><img src="sparkle.gif" style="width:42px;height:42px;">Welcome to coolmothgames!<img src="sparkle.gif" style="width:42px;height:42px;"></h1>
- <a href="bounce"><img src="image1.png" title="bounce" style="width:100px;height:100px;"></a>
- <a href="angrywords"><img src="image2.png" title="angrywords" style="width:100px;height:100px;"></a>
- <a href="tetrapack"><img src="image3.png" title="tetrapack" style="width:100px;height:100px;"></a>
- <a href="cult"><img src="cultimages/cultist.png" title="cult" style="width:100px;height:100px;"></a>
- <a href="ratstuarant"><img src="image6.png" title="ratstuarant" style="width:100px;height:100px;"></a>
- <a href="spellingbeetle"><img src="image7.png" title="spelling beetle" style="width:100px;height:100px;"></a>
- <a href="boomo"><img src="image8.png" title="boomo" style="width:100px;height:100px;"></a>
- <a href="riddles"><img src="riddles/bird0.png" title="Callowcall's Hall of Riddles" style="width:100px;height:100px;"></a>
- <a href="hcp"><img src="image9.png" title="hcp" style="width:100px;height:100px;"></a>
- <a href="circles"><img src="image11.png" title="world of circles" style="width:100px;height:100px;"></a>
- <a href="obfuscate"><img src="image13.png" title="obfuscate" style="width:100px;height:100px;"></a>
- <a href="dailies"><img src="image14.svg" title="daily crossword" style="width:100px;height:100px;"></a>
- <a href="ohmyword"><img src="image15.png" title="oh my word!" style="width:100px;height:100px;"></a>
- <a href="basketball"><img src="basketball/basketball.svg" title="basketball" style="width:100px;height:100px;"></a>
- <p>Fifty percent off all games</p>
- <p>Deliveries please use other entrance</p>
-</div>
+        const bksp=new Image(); bksp.src="images/backspace.svg";
+        const entr=new Image(); entr.src="images/enter.svg";
 
+        const shadow=new Image(); shadow.src="images/shadows.svg";
+        const shade=new Image(); shade.src="images/shade.svg";
+
+        var userfont = new FontFace('userfont', 'url(font.ttf)');
+        userfont.load().then(function(loaded_face) {
+    	document.fonts.add(loaded_face);
+      	document.body.style.fontFamily = '"userfont", Verdana';
+        }).catch(function(error) {
+	    // error occurred
+        });
+        
+        var numberfont = new FontFace('numberfont', 'url(numberfont.ttf)');
+        numberfont.load().then(function(loaded_face) {
+    	document.fonts.add(loaded_face);
+      	document.body.style.fontFamily = '"numberfont", Verdana';
+        }).catch(function(error) {
+	    // error occurred
+        });
+
+        fontgrow=[["!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", " "]
+                , ["¡", "¢", "£", "¤", "¥", "¦", "§", "¨", "©", "ª", "«", "¬", "¼", "®", "¯", "°", "±", "²", "³", "½", "µ", "¶", "·", "¾", "¹", "º", " "]
+                , ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " "]
+                , ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", " "]];
+
+        playertext=[[15, 11, 0, 24, 4, 17, 26, 14, 13, 4], [15, 11, 0, 24, 4, 17, 26, 19, 22, 14]];
+        pickarock=[15, 8, 2, 10, 26, 13, 4, 22, 26, 2, 4, 13, 19, 17, 4, 26, 17, 14, 2, 10];
+
+        function loadFile(filePath) {
+            var result = null;
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", filePath, false);
+            xmlhttp.send();
+            if (xmlhttp.status==200) {
+                result = xmlhttp.responseText;
+            }
+            return result;
+        }
+
+        function wordcheck(word){
+            valid=false;
+            words=loadFile("words/"+input[0]+String(word.length)+".txt").split("\r\n");
+            for(i=0;i<words.length;i++){
+                if(words[i]==input) valid=true;
+            }
+            if(input.indexOf(L[3])!=-1 && valid) return true;
+            else return false;
+        }
+        function randomletter(){
+            k=2;
+            while(k>0){
+                i=Math.random();
+                j="E"; if(i>.112) j="A"; if(i>.197) j="R"; if(i>.273) j="I"; if(i>.348) j="O"; if(i>.420) j="T"; if(i>.490) j="N"; if(i>.557) j="S"; if(i>.614) j="L"; if(i>.669) j="C"; if(i>.714) j="U"; if(i>.750) j="D"; if(i>.784) j="P"; if(i>.816) j="M"; if(i>.846) j="H"; if(i>.876) j="G"; if(i>.901) j="B"; if(i>.921) j="F"; if(i>.939) j="Y"; if(i>.957) j="W"; if(i>.970) j="K"; if(i>.981) j="V"; if(i>.991) j="X"; if(i>.994) j="Z"; if(i>.997) j="J"; if(i>.999) j="Q";
+                k=0;
+                for(I=0;I<num;I++){
+                    if(j==L[I])k+=1;
+                }
+            }
+            return j;
+        }
+        function randomvowel(){
+            k=2;
+            while(k>0){
+                i=Math.random();
+                j="E"; if(i>.295) j="A"; if(i>.519) j="I"; if(i>.717) j="O"; if(i>.906) j="U";
+                k=0;
+                for(I=0;I<num;I++){
+                    if(j==L[I])k+=1;
+                }
+            }
+            return j;
+        }
+        L[0]=randomletter(); L[1]=randomletter(); L[2]=randomletter(); L[3]=randomletter(); L[4]=randomletter(); L[5]=randomletter(); L[6]=randomletter();
+        vowel=false;
+        for(i=0;i<num;i++){
+            if(L[i]=="A" || L[i]=="E" || L[i]=="I" || L=="O" || L=="U") vowel=true;
+        }
+        if(!vowel) L[4]=randomvowel();
+
+        function resize(){
+            if (window.innerWidth>window.innerHeight){
+                B=window.innerHeight/5;
+                D=window.innerHeight/12;
+                C=(window.innerWidth-4*B)/2-D;
+                xoff=window.innerWidth/2-3*B/2;
+                yoff=window.innerHeight/2-3*B/2;
+                syoff=window.innerHeight/2;
+            }
+            else{
+                B=window.innerWidth/3;
+                D=0;
+                C=window.innerWidth/3;
+                xoff=0;
+                yoff=C/2;
+                syoff=B/2;
+            }
+        }
+
+        function ongoingTouchIndexById(idToFind) {
+        for (let i = 0; i < ongoingTouches.length; i++) {
+            const id = ongoingTouches[i].identifier;
+            if (id === idToFind) {
+                return i;
+            }
+        }
+            return -1; // not found
+        }
+        function copyTouch({ identifier, pageX, pageY }) {
+            return { identifier, pageX, pageY };
+        }
+
+        function enter(){
+            if(wordcheck(input) && stage==0){
+                stage=1;
+                animtime=anim1;
+                score[player]+=input.length;
+            }
+        }
+
+        function click(){
+            for(i=0;i<num;i++){
+                if(mx>Lx[i] && mx<Lx[i]+1 && my>Ly[i] && my<Ly[i]+1){
+                    if(stage==0){
+                        input+=L[i];
+                        used+=i;
+                    }
+                    if(stage==2 && used.indexOf(i)!=-1){
+                        chosen=i;
+                        if(chosen!=3){
+                            stage=3;animtime=anim2;
+                            newletter=L[3];
+                            player=(player+1)%2;
+                            while(newletter==L[3])newletter=randomletter();
+                            temp=0;
+                            for(i=0;i<num;i++){
+                                if(L[i]=="A" || L[i]=="E" || L[i]=="I" || L[i]=="O" || L[i]=="U") temp+=1;
+                            }
+                            if (temp<2){newletter=L[3]; while(newletter==L[3])newletter=randomvowel();}
+                        }
+                    }
+                }
+            }
+            if(mx>0 && mx<1 && my>2.3 && my<3.3 && input.length!=0 && stage==0){
+                input=input.slice(0, -1);
+                used=used.slice(0, -1);
+            }
+            if(mx>2.2 && mx<3.2 && my>2.3 && my<3.3) enter();
+        }
+
+        document.addEventListener("contextmenu", e => e.preventDefault());
+        document.addEventListener('mousedown', (event) => {
+            mx=(event.clientX-xoff)/B;
+            my=(event.clientY-yoff)/B;
+            if(event.button==0 && !touched) click();
+            touched=false;
+        }, false);
+        document.addEventListener('touchstart', (event) => {
+            mx=(event.targetTouches[0].clientX-xoff)/B;
+            my=(event.targetTouches[0].clientY-yoff)/B;
+            touched=true;
+            click();
+            for(i=0;i<event.changedTouches.length;i++){
+                ongoingTouches.push(copyTouch(event.changedTouches[i]));
+            }
+        });
+        document.addEventListener('touchmove', (event) => {
+            for(i=0;i<event.changedTouches.length;i++){
+                idx = ongoingTouchIndexById(event.changedTouches[i].identifier);
+                if(idx>=0)ongoingTouches.splice(idx, 1, copyTouch(event.changedTouches[i]));
+            }
+        });
+        document.addEventListener('touchend', (event) => {
+            for(i=0;i<event.changedTouches.length;i++){
+                idx=ongoingTouchIndexById(event.changedTouches[i].identifier);
+                if(idx>=0)ongoingTouches.splice(idx, 1);;
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if(event.key=="Backspace" && input.length!=0 && stage==0){
+                input=input.slice(0, -1);
+                used=used.slice(0, -1);
+            }
+            if(event.key=="Enter") enter();
+            if(L.indexOf(event.key.toUpperCase())!=-1){
+                if(stage==0){
+                    input+=event.key.toUpperCase();
+                    used+=L.indexOf(event.key.toUpperCase());
+                }
+                if(stage==2 && used.indexOf(L.indexOf(event.key.toUpperCase()))!=-1 && L.indexOf(event.key.toUpperCase())!=3){
+                    chosen=L.indexOf(event.key.toUpperCase());
+                    if(chosen!=3){
+                        stage=3;animtime=anim2;
+                        newletter=L[3];
+                        player=(player+1)%2;
+                        while(newletter==L[3])newletter=randomletter();
+                        temp=0;
+                        for(i=0;i<num;i++){
+                            if(L[i]=="A" || L[i]=="E" || L[i]=="I" || L[i]=="O" || L[i]=="U") temp+=1;
+                        }
+                        if (temp<2){newletter=L[3]; while(newletter==L[3])newletter=randomvowel();}
+                    }
+                }
+            }
+        }, false);
+
+        setInterval("draw()", 20);
+        function draw() {
+            ctx.canvas.width  = window.innerWidth;
+            ctx.canvas.height = window.innerHeight-5;
+            resize();
+            if(window.innerWidth>window.innerHeight){
+                ctx.drawImage(shade, D, syoff-C/2, C, C); ctx.drawImage(rock[3-Math.floor(turnanim/2)], D, syoff-C/2, C, C);
+                ctx.drawImage(shade, window.innerWidth-C-D, syoff-C/2, C, C); ctx.drawImage(rock[Math.floor(turnanim/2)], window.innerWidth-C-D, syoff-C/2, C, C);
+            }
+            else{
+                if(stage==3){
+                    ctx.drawImage(frame[Math.floor(3*animtime/anim2)], C/4+(window.innerWidth-C)*(1-player), syoff+C/5-C/4, C/2, C/2);
+                    ctx.drawImage(frame[3-Math.floor(3*animtime/anim2)], C/4+(window.innerWidth-C)*player, syoff+C/5-C/4, C/2, C/2);
+                }
+                else ctx.drawImage(frame3, C/4+(window.innerWidth-C)*player, syoff+C/5-C/4, C/2, C/2);
+            }
+            ctx.font=String(C/4)+"px numberfont";
+            ctx.fillStyle="black";
+            ctx.textAlign="center";
+            ctx.textBaseline="middle";
+            ctx.fillStyle="black";
+            ctx.fillText(score[0], D+C/2, syoff+C/5);
+            ctx.fillText(score[1], window.innerWidth-C/2-D, syoff+C/5);
+            if(turnanim>0 && player==0) turnanim-=1;
+            if(turnanim<anim3-1 && player==1) turnanim+=1;
+            
+            noc=2*Math.floor(6*window.innerWidth/window.innerHeight)+1;
+            for(i=1;i<noc-1;i++){
+                ctx.drawImage(clutter[i%2], i*window.innerWidth/noc, 0, D, D);
+                ctx.drawImage(clutter[(i+1)%2], i*window.innerWidth/noc, window.innerHeight-D, D, D);
+            }
+            for(i=0;i<12;i++){
+                ctx.drawImage(clutter[i%2], 0, i*D, D, D);
+                ctx.drawImage(clutter[i%2], window.innerWidth-D, i*D, D, D);
+            }
+
+            ctx.drawImage(bksp, xoff, yoff+2.3*B, B, B);
+            ctx.drawImage(entr, xoff+2*B, yoff+2.3*B, B, B);
+
+            ctx.drawImage(shadow, xoff, yoff-.2*B, B*3.1, B*3.15);
+
+            for(i=0;i<num;i++){
+                if(input.indexOf(L[i])==-1 && Lanim[i]>0) Lanim[i]-=1;
+                if(input.indexOf(L[i])!=-1 && Lanim[i]<anim3) Lanim[i]+=1;
+                ctx.drawImage(rock[Math.floor(3*Lanim[i]/anim3)], xoff+B*(Lx[i]+.05), yoff+B*(Ly[i]-.23), B, B);
+            }
+            
+            ctx.font=String(window.innerHeight/18)+"px userfont";
+            ctx.fillStyle="black";
+            ctx.textAlign="center";
+            ctx.textBaseline="middle";
+            toptext="";
+            if (stage==0){for(i=0;i<playertext[player].length;i++) toptext+=fontgrow[3][playertext[player][i]];}
+            if(stage==1 && animtime>=anim1/2){for(i=0;i<playertext[player].length;i++) toptext+=fontgrow[Math.floor(6*(animtime-anim1/2)/anim1)][playertext[player][i]];}
+            if(stage==1 && animtime<anim1/2){for(i=0;i<pickarock.length;i++) toptext+=fontgrow[2-Math.floor(6*animtime/anim1)][pickarock[i]];}
+            if (stage==2){for(i=0;i<pickarock.length;i++) toptext+=fontgrow[3][pickarock[i]];}
+            if(stage==3 && animtime>=anim2/2){for(i=0;i<pickarock.length;i++) toptext+=fontgrow[Math.floor(6*(animtime-anim2/2)/anim2)][pickarock[i]];}
+            if(stage==3 && animtime<anim2/2){for(i=0;i<playertext[player].length;i++) toptext+=fontgrow[2-Math.floor(6*animtime/anim2)][playertext[player][i]];}
+            ctx.fillText(toptext, xoff+B*1.5, (D+yoff)/2);
+            for(i=0;i<num;i++){
+                if(stage==3 && (i==chosen || i==3)){
+                    if((i==chosen || i==3) && animtime>=anim2/2) ctx.fillText(fontgrow[Math.floor(6*(animtime-anim2/2)/anim2)][fontgrow[3].indexOf(L[i])], xoff+B*(Lx[i]+.5), yoff+B*(Ly[i]+.5));
+                    if(i==chosen && animtime<anim2/2) ctx.fillText(fontgrow[2-Math.floor(6*animtime/anim2)][fontgrow[3].indexOf(newletter)], xoff+B*(Lx[i]+.5), yoff+B*(Ly[i]+.5));
+                    if(i==3 && animtime<anim2/2) ctx.fillText(fontgrow[2-Math.floor(6*animtime/anim2)][fontgrow[3].indexOf(L[chosen])], xoff+B*(Lx[i]+.5), yoff+B*(Ly[i]+.5));
+                }
+                else ctx.fillText(L[i], xoff+B*(Lx[i]+.5), yoff+B*(Ly[i]+.5));
+            }
+            if (stage==1){
+                temp="";
+                for(i=0;i<input.length;i++){
+                    temp+=fontgrow[Math.floor(3*animtime/anim1)][fontgrow[3].indexOf(input[i])];
+                }
+                ctx.fillText(temp, xoff+B*1.5, yoff+B*3.2);
+                animtime-=1;
+                if(animtime<=0)stage=2;
+            }
+            if(stage==0)ctx.fillText(input, xoff+B*1.5, yoff+B*3.2);
+            if (stage==3){
+                animtime-=1;
+                if(animtime<=0){
+                    L[3]=L[chosen];
+                    L[chosen]=newletter;
+                    used=[];input="";
+                    chosen=3;
+                    stage=0;
+                }
+            }
+            
+            backspaceheld=false;
+            for(i=0;i<ongoingTouches.length;i++){
+                mx=(ongoingTouches[i].pageX-xoff)/B;
+                my=(ongoingTouches[i].pageY-yoff)/B;
+                if(mx>0 && mx<1 && my>2.3 && my<3.3 && input.length!=0 && stage==0) backspaceheld=true;
+            }
+            if(backspaceheld) backspacetimer+=1;
+            else backspacetimer=0;
+            if(backspacetimer>25 && backspacetimer%2==0){
+                input=input.slice(0, -1);
+                used=used.slice(0, -1);
+            }
+        };
+    </script>
 </body>
 </html>
