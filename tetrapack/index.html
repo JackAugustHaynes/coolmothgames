@@ -1,1 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetrapack</title>
+    <style>
+        body, html {margin:0px; width:100%; height:100%;}
+        canvas, html {margin:0px;}
+    </style>
+</head>
+<canvas id="canvas"></canvas>
+<body onload="Generate()" style="background-color:lightseagreen">
+    <script>
+        const ctx=document.getElementById("canvas").getContext("2d");
+        
+        let posX=0; let posY=0;
+        let boX=0; let boY=0;
+        let soX=400; let soY=100; so=65; rows=2;
+        let B=20;
+        let r=0;
+        let hand=-1;
+        let board=[];
+        let as=[];
+        let asa=[];
+        let willfit=0;
+        let c=["lightseagreen", "black", "purple", "turquoise", "blue", "green", "blanchedalmond"];
+        let level=1;
+        let win=0;
+        //IOLJSZT
+        let starts=[[44, 54, 64, 74], [44, 45, 54, 55], [44, 45, 55, 65], [44, 45, 54, 64], [44, 54, 55, 65], [45, 55, 54, 64], [44, 54, 64, 55]];
+        let shapes=[
+            [[1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], 
+             [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]],
 
+            [[1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+
+            [[1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+             [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0]],
+
+            [[1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0]],
+
+            [[0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+             [0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]],
+
+            [[1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]],
+
+            [[1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+             [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+             [1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]],
+        ];
+        let centres=[[[2, .5], [.5, 2]], 
+                     [[1, 1], [1, 1]], 
+                     [[1.5, 1], [1, 1.5]], 
+                     [[1.5, 1], [1, 1.5]], 
+                     [[1.5, 1], [1, 1.5]], 
+                     [[1.5, 1], [1, 1.5]], 
+                     [[1.5, 1], [1, 1.5]]]
+        document.addEventListener("contextmenu", e => e.preventDefault());
+        document.addEventListener('mousedown', (event) => {
+            posX=event.clientX; posY=event.clientY;
+            if(event.button==0 && win==1){
+                win=0;level+=1;Generate();
+            }
+            if(event.button==0 && win==0){
+                pickup();
+                if(hand!=-1)putdown();
+                remove();
+            }
+            if(event.button==1 && event.ctrlKey)Generate();
+            if(event.button==2)r=(r+1)%4;
+        }, false);
+        document.addEventListener('touchstart', (event) => {
+            posX=event.touches[0].clientX;
+            posY=event.touches[0].clientY;
+            if(win==0){
+                pickup();
+                remove();
+            }
+            if (event.touches.length>1)r=(r+1)%4;
+        }, false);
+        document.addEventListener('touchend', (event) => {
+            putdown();
+            if(hand!=-1&&event.touches.length==0){
+                asa[hand]=true;
+                hand=-1;
+            }
+        }, false)
+        
+        function pickup(){
+            for(i=0;i<as.length;i++){
+                if(posX>soX+so*(i%rows) && posX<soX+so*(i%rows)+4*B && posY>soY+so*Math.floor(i/rows) && posY<soY+so*Math.floor(i/rows)+4*B && asa[i]){
+                    if(hand!=-1) asa[hand]=true;
+                    hand=i;r=0;asa[i]=false;
+                }
+            }
+        }
+        function putdown(){
+            if(posX>boX && posX<boX+n*B && posY>boY && posY<boY+B*Math.ceil(board.length/n) && hand!=-1){
+                TLx=Math.floor((posX-boX-B*centres[as[hand]][r%2][0]+B/2)/B);
+                TLy=Math.floor((posY-boY-B*centres[as[hand]][r%2][1]+B/2)/B);
+                willfit=1;
+                for(i=0;i<16;i++){
+                    if(shapes[as[hand]][r][i]==1 && board[n*(TLy+Math.floor(i/4))+TLx+i%4]!=1)willfit=0;
+                }
+                if(willfit==1){
+                    for(i=0;i<16;i++){
+                        if(shapes[as[hand]][r][i]==1) board[n*(TLy+Math.floor(i/4))+TLx+i%4]=hand+2;
+                    }
+                    hand=-1;
+                }
+                win=1;
+                for(i=0;i<board.length;i++){
+                    if(board[i]==1)win=0;
+                }
+            }
+        }
+        function remove(){
+            if(posX>boX && posX<boX+n*B && posY>boY && posY<boY+B*Math.ceil(board.length/n)){
+                if(board[n*Math.floor((posY-boY)/B)+Math.floor((posX-boX)/B)]>1 && willfit==0){
+                    j=board[n*Math.floor((posY-boY)/B)+Math.floor((posX-boX)/B)];
+                    for(i=0;i<board.length;i++){
+                        if(board[i]==j) board[i]=1;
+                    }
+                    asa[j-2]=true;
+                }
+                willfit=0;
+            }
+        }
+
+        document.addEventListener('mousemove', (event) => {
+            posX=event.clientX; posY=event.clientY;
+        }, false);
+        document.addEventListener('touchmove', (event) => {
+            posX=event.touches[0].clientX; posY=event.touches[0].clientY;
+        }, false);
+
+        setInterval("draw()", 20);
+        function draw() {
+            ctx.canvas.width=window.innerWidth;
+            ctx.canvas.height=window.innerHeight-5;
+            for(i=0;i<board.length;i++){
+                if(board[i]!=0){
+                    ctx.beginPath();
+                    ctx.fillStyle=c[board[i]];
+                    if(board[i]==undefined)ctx.fillStyle="red";
+                    ctx.fillRect(boX+B*(i%n), boY+B*Math.floor(i/n), B*.9, B*.9);
+                }
+            }
+            for(i=0;i<as.length;i++){
+                ctx.beginPath();
+                ctx.fillStyle=c[i+2];
+                for(j=0;j<16;j++){
+                    if(shapes[as[i]][0][j]==1&&asa[i])ctx.fillRect(soX+so*(i%rows)+B*(j%4), soY+so*Math.floor(i/rows)+B*Math.floor(j/4), B*.9, B*.9);
+                }
+            }
+            if(hand!=-1){
+                ctx.beginPath();
+                ctx.fillStyle=c[hand+2];
+                for(j=0;j<16;j++){
+//                    if(shapes[as[hand]][r][j]==1)ctx.fillRect(posX-B*centres[as[hand]][r%2][0]+B*(j%4), posY-B*centres[as[hand]][r%2][1]+B*Math.floor(j/4), B*.9, B*.9);
+                    TLx=Math.floor((posX-boX-B*centres[as[hand]][r%2][0]+B/2)/B);
+                    TLy=Math.floor((posY-boY-B*centres[as[hand]][r%2][1]+B/2)/B);
+                    if(shapes[as[hand]][r][j]==1)ctx.fillRect(boX+TLx*B+B*(j%4), boY+TLy*B+B*Math.floor(j/4), B*.9, B*.9);
+                }
+            }
+            ctx.font=""+Math.floor(B*2)+"px verdana";
+            ctx.fillStyle = "black";
+            if(window.innerWidth>window.innerHeight)ctx.fillText("level "+level, 2*B, 11*B);
+            if (win){
+                ctx.font = "100px sans serif";
+                ctx.fillText("well done!", 20, 100);
+            }
+        };
+
+        function Generate() {
+            i=generate();
+            while(i)i=generate();
+            if(window.innerWidth>window.innerHeight){
+                B=window.innerHeight/12;
+                boX=B*Math.floor(6-n/2); boY=B;
+                soX=12*B; soY=B;
+                so=4*B; rows=2;
+            }
+            else{                
+                B=window.innerWidth/12;
+                boX=B*Math.floor(6-n/2); boY=B;
+                soX=B; soY=12*B;
+                so=4*B; rows=3;
+            }
+        }
+
+        function generate() {
+            n=10;
+            board=[];
+            j=Math.floor(Math.random()*starts.length);
+            for(i=0;i<starts[j].length;i++)board[starts[j][i]]=1;
+            as=[j];asa=[true];
+            for(I=0;I<4;I++){
+                Tmargin=4;
+                Lmargin=4;
+                Rmargin=4;
+                for(i=0;i<board.length;i++){
+                    if(board[i]!=0){
+                        if(Math.floor(i/n)<Tmargin)Tmargin=Math.floor(i/n);
+                        if(i%n<Lmargin)Lmargin=i%n;
+                        if(n-i%n<Rmargin)Rmargin=n-i%n;
+                    }
+                }
+                if (Tmargin<4||Lmargin<4||Rmargin<4){
+                    I-=1;
+                    newn=n+8-Lmargin-Rmargin;
+                    temp=[];temp.length=(Math.floor(board.length/n)+1)*newn;temp.fill(0);
+                    for(i=0;i<board.length;i++){
+                        if(board[i]==1) temp[(4-Tmargin)*newn+newn*(Math.floor(i/n))+(4-Lmargin)+i%n]=board[i];
+                    }
+                    board=temp;
+                    n=newn;
+                }
+                else{
+                    startpoints=[];
+                    for(i=0;i<board.length;i++){
+                        if(board[i]==1 && board[i+1]==0) startpoints.push(i+1);
+                        if(board[i]==1 && board[i-1]==0) startpoints.push(i-1);
+                        if(board[i]==1 && board[i+n]==0) startpoints.push(i+n);
+                        if(board[i]==1 && board[i-n]==0) startpoints.push(i-n);
+                    }
+                    list1=[];//confirmed parts of new shape
+                    list2=[];//other new shape candidates
+                    list3=[];//priority new shape candidates (not used yet)
+                    list1[0]=startpoints[Math.floor(Math.random()*startpoints.length)];
+                    for(j=0;j<3;j++){
+                        for(i=0;i<list1.length;i++){
+                            if(board[list1[i]+1]==0&&list1.indexOf(list1[i]+1)==-1)list2.push(list1[i]+1);
+                            if(board[list1[i]-1]==0&&list1.indexOf(list1[i]-1)==-1)list2.push(list1[i]-1);
+                            if(board[list1[i]+n]==0&&list1.indexOf(list1[i]+n)==-1)list2.push(list1[i]+n);
+                            if(board[list1[i]-n]==0&&list1.indexOf(list1[i]-n)==-1)list2.push(list1[i]-n);
+                        }
+                        if(list2.length==0){
+                            break;
+                            I-=1;
+                        }
+                        else{
+                            list1.push(list2[Math.floor(Math.random()*list2.length)]);
+                            list2=[];
+                        }
+                    }
+                    if (list1.length==4){
+                        TL=list1[0];
+                        shapemade=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                        for(i=0;i<4;i++){
+                            board[list1[i]]=1;
+                            if(list1[i]%n<TL%n)TL=n*Math.floor(TL/n)+list1[i]%n;
+                            if(Math.floor(list1[i]/n)<Math.floor(TL/n))TL=n*Math.floor(list1[i]/n)+TL%n;
+                        }
+                        for(i=0;i<4;i++){
+                            shapemade[4*(Math.floor(list1[i]/n)-Math.floor(TL/n))+(list1[i]-TL)%n]=1;
+                        }
+                        shapenumber=-1;
+                        for(i=0;i<shapes.length;i++){
+                            for(j=0;j<4;j++){
+                                if(shapenumber==-1){
+                                    shapenumber=i;
+                                    for(k=0;k<16;k++){
+                                        if(shapemade[k]!=shapes[i][j][k])shapenumber=-1;
+                                    }
+                                }
+                            }
+                        }
+                        as.push(shapenumber);asa.push(true);
+                    }
+                }
+            }
+            j=0;
+            s1=Math.floor(board.length/n)+1;s2=n;s3=0;s4=0;
+            for(i=0;i<board.length;i++){
+                if(board[i]==1&&i%n<s2)s2=i%n;
+                if(board[i]==1&&i%n>s4)s4=i%n;
+                if(board[i]==1&&Math.floor(i/n)<s1)s1=Math.floor(i/n);
+                if(board[i]==1&&Math.floor(i/n)>s3)s3=Math.floor(i/n);
+            }
+            temp=[];temp.length=(s4-s2+1)*(s3-s1+1);temp.fill(0);
+            newn=s4-s2+1;
+            for(i=0;i<board.length;i++){
+                if(board[i]==1){
+                    j+=1;
+                    temp[newn*(Math.floor(i/n)-s1)+(i%n)-s2]=1;
+                }
+            }
+            board=temp;
+            n=newn;
+            if(n<11) return false;
+            else return true;
+        }
+    </script>
+</body>
+</html>
