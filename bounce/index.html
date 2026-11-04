@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place</title>
+    <style>
+        body, html {margin:0px; width:100%; height:100%;}
+        canvas, html {margin:0px;}
+    </style>
+</head>
+<canvas id="canvas"></canvas>
+<body onload="draw()" style="background-color:blanchedalmond">
+    <script>
+        const ctx=document.getElementById("canvas").getContext("2d");
+        let x=200;
+        let y=200;
+        let coinx=Math.floor(Math.random()*(window.innerWidth/20-10))*20;
+        let coiny=Math.floor(Math.random()*24)*20;
+        let oinx=0;
+        let oiny=0;
+        let bombs=[];
+        let a=0;
+        let b=15;
+        let coins=0;
+        let cc=0;
+        let cdown=0;
+        let combo=0;
+        let touch=false;
+        const ding=new Audio("ding.wav");
+        var junction_font = new FontFace('Junction Regular', 'url(bounce/OpenSans.ttf)');
+        junction_font.load().then(function(loaded_face) {
+    	document.fonts.add(loaded_face);
+      	document.body.style.fontFamily = '"Junction Regular", Arial';
+        }).catch(function(error) {
+	    // error occurred
+        });
+        document.addEventListener("contextmenu", e => e.preventDefault());
+        document.addEventListener('mousedown', (event) => {
+            if(event.button==0 && !touch){a=-20;touch=false;}
+            if(event.button==2){b=-b;}//bombs.push([x, y, -b, a]);}
+        }, false);
+        document.addEventListener('touchstart', (event) => {
+            a=-20;
+            touch=true;
+        }, false);
+        setInterval("draw()", 20);
+        function draw() {
+            y+=a;
+            x+=b;
+            a+=1;
+            if(y>500){y=500;a=0;}
+            if(y<0){y=0;a=0;};
+            if(x<0){x=0;b=15;}
+            if(x>window.innerWidth){x=window.innerWidth;b=-15;}
+            if(Math.pow(x-coinx, 2)<400 && Math.pow(y-coiny, 2)<400){
+                oinx=coinx;oiny=coiny;cc=20;
+                coinx=Math.floor(Math.random()*(window.innerWidth/20-10))*20;coiny=Math.floor(Math.random()*24)*20;
+                if(combo==0)coins+=1;else coins+=combo;cdown=100;combo+=1;}
+            if(cc>0)cc-=1;
+            if(cc<0)cc=0;
+            if(cdown>0)cdown-=1;
+            if(cdown<=0){cdown=0;combo=0;}
+            ctx.canvas.width  = window.innerWidth;
+            ctx.canvas.height = window.innerHeight-5;
+            ctx.beginPath();
+            ctx.fillStyle="red";
+            if(combo>1)ctx.rect(120, 10, cdown, 30);
+            for (let i = 0; i < bombs.length; i++){
+                ctx.rect(bombs[i][0], bombs[i][1], 20, 20);
+                bombs[i][0]+=bombs[i][2];
+                bombs[i][1]+=bombs[i][3];
+                if(bombs[i][1]>500){bombs[i][1]=500;bombs[i][3]=-bombs[i][3]}
+                if(bombs[i][1]<0){bombs[i][1]=0;bombs[i][3]=-bombs[i][3]}
+                if(bombs[i][0]>window.innerWidth){bombs[i][0]=window.innerWidth;bombs[i][2]=-bombs[i][2]}
+                if(bombs[i][0]<0){bombs[i][0]=0;bombs[i][2]=-bombs[i][2]}
+            }
+            ctx.fill();
+            ctx.beginPath();
+            ctx.fillStyle="black";
+            ctx.rect(x, y, 20, 20);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.fillStyle="gold";
+            ctx.rect(coinx+cc/2, coiny, 20-cc, 20);
+            ctx.rect(oinx+10-cc/2, oiny-20+cc, cc, 20);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.fillStyle="bisque";
+            ctx.rect(0, 520, 2000, 600);
+            ctx.fill();
+            ctx.font = "30px Junction Regular";
+            ctx.fillStyle = "black";
+            ctx.fillText(coins, 20, 40);
+            if(combo>1) ctx.fillText("combo x"+combo, 120, 40);
+        };
+    </script>
+</body>
+</html>
